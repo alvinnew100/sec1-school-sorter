@@ -49,6 +49,7 @@ input[type=number],input[type=text],input[type=search],select{width:100%;padding
 .badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .b{font-size:11.5px;padding:2px 7px;border-radius:6px;background:#eef0f3;color:#39424c}
 .b.warn{background:var(--reach-bg);color:var(--reach)}
+.b.jc{background:#e8eefb;color:#23408e}
 .pill{flex:none;text-align:right}
 .pct{font-size:20px;font-weight:700;line-height:1}
 .cat{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px}
@@ -162,6 +163,9 @@ footer{max-width:1180px;margin:0 auto;padding:0 14px 90px;font-size:12px;color:v
         <label class="f">Town
           <select id="town"><option value="">All towns</option></select>
         </label>
+        <label class="f">JC link
+          <select id="jcf"><option value="">Any</option><option value="*">Affiliated to a JC</option></select>
+        </label>
         <label class="f">Sort by
           <select id="sort"><option value="close">Closest to my score</option><option value="chance">Best chance first</option><option value="cop">Most competitive first</option><option value="name">Name</option></select>
         </label>
@@ -238,7 +242,7 @@ const $ = id => document.getElementById(id);
 
 // ---------- state ----------
 const state = {al:14, gender:"Girls", cit:"SC", mt:"", hcl:"", aff:"", postal:"", pg:"",
-  q:"", zone:"", town:"", sort:"close", cat:"", mtOnly:true, showIP:true, list:[]};
+  q:"", zone:"", town:"", jcf:"", sort:"close", cat:"", mtOnly:true, showIP:true, list:[]};
 const store = {
   get(){ try { return JSON.parse(localStorage.getItem("s1sorter") || "null"); } catch(e){ return null; } },
   set(v){ try { localStorage.setItem("s1sorter", JSON.stringify(v)); } catch(e){} }
@@ -305,6 +309,7 @@ function chance(s, t, rank){
   return p;
 }
 const catOf = p => CAT.find(c => p >= c.min);
+const fmtPct = p => p < .005 ? "<1%" : p > .995 ? ">99%" : Math.round(p*100) + "%";
 
 // ---------- eligibility ----------
 function pgOptions(al){
@@ -331,6 +336,8 @@ function visible(s){
   if (ms === "missing" && state.mtOnly) return false;
   if (state.zone && s.zone !== state.zone) return false;
   if (state.town && s.town !== state.town) return false;
+  if (state.jcf === "*" && !s.jc) return false;
+  if (state.jcf && state.jcf !== "*" && s.jc !== state.jcf && !(state.showIP && s.ipJc === state.jcf)) return false;
   if (state.q && !(s.name + " " + s.full).toLowerCase().includes(state.q.toLowerCase())) return false;
   return tracksFor(s).length > 0;
 }
@@ -355,8 +362,8 @@ function trackBlock(s, t){
   const affNote = et.startsWith("aff_") ? ` · <span style="color:var(--accent)">affiliated (1st choice)</span>` : "";
   const stale = (s.stale || []).includes(et) ? ` · no 2026 figure published` : "";
   return `<div class="track">
-    <div class="track-h"><span>${TRACK_LABEL[t]}${affNote}${stale}</span>
-      <span><span class="pct c-${c.k}">${Math.round(p*100)}%</span> <span class="cat bg-${c.k}">${c.label}</span></span></div>
+    <div class="track-h"><span>${TRACK_LABEL[t]}${t === "IP" && s.ipJc ? " → " + esc(s.ipJc) : ""}${affNote}${stale}</span>
+      <span><span class="pct c-${c.k}">${fmtPct(p)}</span> <span class="cat bg-${c.k}">${c.label}</span></span></div>
     <div class="hist">${boxes}${est}</div>
     <div style="display:flex;justify-content:flex-end;margin-top:6px">
       <button class="add ${idx >= 0 ? "on" : ""}" data-add="${esc(s.name)}" data-track="${t}" ${full ? "disabled" : ""}>${idx >= 0 ? "✓ Choice " + (idx+1) : "+ Add"}</button>
@@ -389,10 +396,11 @@ function renderList(){
     const warn = ms === "missing" ? `<span class="b warn">${esc(state.mt)} not taught here</span>` : "";
     const tags = [s.gender, s.sap ? "SAP" : "", s.autonomous ? "Autonomous" : "", s.type && !/^Government$/i.test(s.type) ? s.type : ""].filter(Boolean)
                  .map(x => `<span class="b">${esc(x)}</span>`).join("");
+    const jcB = s.jc ? `<span class="b jc">Affiliated JC: ${esc(s.jc)}</span>` : "";
     return `<article class="school">
       <div class="top"><div><h3>${esc(s.full)}</h3>
         <div class="meta">${esc(s.town)}${s.zone ? " · " + esc(s.zone) : ""}</div>
-        <div class="badges">${tags}${mtB}${warn}</div></div></div>
+        <div class="badges">${tags}${mtB}${warn}${jcB}</div></div></div>
       ${tracks.map(t => trackBlock(s, t)).join("")}
       <div class="links"><a href="${mapsLink(s)}" target="_blank" rel="noopener">Directions${/^\d{6}$/.test(state.postal) ? " from home" : ""}</a>
         <a href="https://www.google.com/search?q=${encodeURIComponent(s.full + " site:moe.gov.sg schoolfinder")}" target="_blank" rel="noopener">MOE SchoolFinder</a></div>
@@ -428,7 +436,7 @@ function renderShortlist(){
     const s = byName[x.name], p = chance(s, x.track, i+1), c = catOf(p), et = effTrack(s, x.track, i+1);
     return `<li><span class="n">${i+1}</span>
       <div><div class="nm">${esc(s.full)}</div>
-        <div class="sub">${TRACK_LABEL[x.track]}${et.startsWith("aff_") ? " · affiliated" : ""} · last cut-off ${esc(lastVal(s, et) || "–")} · <span class="c-${c.k}" style="font-weight:700">${Math.round(p*100)}% at this rank</span></div></div>
+        <div class="sub">${TRACK_LABEL[x.track]}${x.track === "IP" && s.ipJc ? " → " + esc(s.ipJc) : (s.jc ? " · JC: " + esc(s.jc) : "")}${et.startsWith("aff_") ? " · affiliated" : ""} · last cut-off ${esc(lastVal(s, et) || "–")} · <span class="c-${c.k}" style="font-weight:700">${fmtPct(p)} at this rank</span></div></div>
       <div class="ctl"><button class="ib" data-up="${i}" ${i === 0 ? "disabled" : ""} aria-label="Move up">↑</button>
         <button class="ib" data-down="${i}" ${i === L.length-1 ? "disabled" : ""} aria-label="Move down">↓</button>
         <button class="ib" data-rm="${i}" aria-label="Remove">✕</button></div></li>`;
@@ -478,7 +486,8 @@ function renderMethod(){
   <p>"Same as last year" was the most accurate. Schools whose cut-off jumped or fell sharply did <i>not</i> reliably bounce back the next year. So the 2027 estimate is centred on the 2026 cut-off.</p>
   <p><b>Uncertainty.</b> Errors on past years had a spread of about ±${MODEL.sdTotal.toFixed(2)} points. Much of that comes from whole-cohort swings: the average G3 cut-off moved ${sh["2024"]>0?"+":""}${sh["2024"]}, ${sh["2025"]>0?"+":""}${sh["2025"]} and ${sh["2026"]>0?"+":""}${sh["2026"]} points into 2024, 2025 and 2026. The "2027 est." box shows the range covering about 80% of outcomes.</p>
   <p><b>Ties.</b> If your score equals the cut-off, MOE breaks ties by citizenship, then how high you ranked the school, then by computerised ballot. With no data on how many tied students there are, we <i>assume</i> a Singapore Citizen wins a tie about 55% of the time at 1st choice, falling 7 points per lower rank (minimum 20%). PRs and international students are scaled down further. At SAP schools, a Higher Chinese grade is compared before the usual tie-breakers.</p>
-  <p><b>Affiliation</b> applies only when the affiliated school is your 1st choice, and only for its non-IP (SEC) track.</p>
+  <p><b>JC links.</b> "Affiliated JC" comes from each JC's MOE SchoolFinder page (ACJC, CJC, NYJC, SAJC, VJC). Students from an affiliated secondary school get 2 bonus points in the JC admission exercise when they put that JC as 1st choice. "IP → …" shows where a school's Integrated Programme continues after Sec 4 without O-levels.</p>
+  <p><b>Affiliation</b> (primary → secondary) applies only when the affiliated school is your 1st choice, and only for its non-IP (SEC) track.</p>
   <p><b>Limits.</b> Four years of data is little to go on, and nobody knows this cohort's scores or choices yet. Use the estimates to check how risky your list is, not as a promise. This year's real cut-offs are published with the posting results (tentatively 18 Dec 2026).</p>`;
 }
 
@@ -486,7 +495,7 @@ function renderMethod(){
 function bind(){
   const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
   on("al","input", e => { const v = parseInt(e.target.value, 10); if (v >= 4 && v <= 30) { state.al = v; state.list = state.list.filter(x => tracksForName(x)); renderAll(); } });
-  for (const id of ["gender","cit","mt","hcl","aff","zone","town","sort"]) on(id, "change", e => {
+  for (const id of ["gender","cit","mt","hcl","aff","zone","town","jcf","sort"]) on(id, "change", e => {
     state[id] = e.target.value;
     if (id === "gender" || id === "mt") state.list = state.list.filter(x => eligible(byName[x.name]));
     renderAll(); });
@@ -514,7 +523,7 @@ function bind(){
   on("shareBtn","click", () => { const link = location.href.split("#")[0] + "#" + btoa(unescape(encodeURIComponent(JSON.stringify(state)))); copy(link, "Share link copied"); });
   on("copyBtn","click", () => { const res = state.list.length ? simulate() : [];
     const txt = `My Sec 1 choices (AL ${state.al}, ${TRACK_LABEL[currentPG()]}):\n` + state.list.map((x, i) => { const s = byName[x.name];
-      return `${i+1}. ${s.full} – ${TRACK_LABEL[x.track]}, last cut-off ${lastVal(s, effTrack(s, x.track, i+1))}, est. ${Math.round(chance(s, x.track, i+1)*100)}% chance`; }).join("\n") +
+      return `${i+1}. ${s.full} – ${TRACK_LABEL[x.track]}, last cut-off ${lastVal(s, effTrack(s, x.track, i+1))}, est. ${fmtPct(chance(s, x.track, i+1))} chance`; }).join("\n") +
       (state.list.length ? `\nChance of none: ${Math.round(res[state.list.length]*100)}%` : "");
     copy(txt, "Copied"); });
   on("mbBtn","click", () => $("shortlistPanel").scrollIntoView({behavior:"smooth"}));
@@ -540,7 +549,9 @@ function init(){
   $("town").innerHTML += towns.map(t => `<option>${esc(t)}</option>`).join("");
   const affs = SCHOOLS.filter(s => Object.keys(s.pred).some(k => k.startsWith("aff_"))).sort((a,b) => a.full.localeCompare(b.full));
   $("aff").innerHTML += affs.map(s => `<option value="${esc(s.name)}">${esc(s.full)}</option>`).join("");
-  for (const id of ["al","gender","cit","mt","hcl","aff","postal","zone","town","sort","q"]) $(id).value = state[id];
+  const jcs = [...new Set(SCHOOLS.flatMap(s => [s.jc, s.ipJc]).filter(Boolean))].sort();
+  $("jcf").innerHTML += jcs.map(j => `<option value="${esc(j)}">${esc(j)}</option>`).join("");
+  for (const id of ["al","gender","cit","mt","hcl","aff","postal","zone","town","jcf","sort","q"]) $(id).value = state[id];
   $("mtOnly").checked = state.mtOnly; $("showIP").checked = state.showIP;
   document.querySelectorAll("#catChips .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.cat === state.cat));
   if (location.hash) history.replaceState(null, "", location.pathname + location.search);

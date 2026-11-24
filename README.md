@@ -9,6 +9,7 @@ A one-page planner for Singapore's Secondary 1 posting. Enter a PSLE score, filt
 - An estimated 2027 cut-off range, with a chance-of-admission for each school
 - A simulation of your 6 choices, showing where you'd likely be posted. The tie-breaker order (citizenship → choice rank → ballot) is applied, and cut-offs move together across schools
 - Checks against MOE guidance: uses all 6 choices, includes 2–3 safer schools, affiliated school placed 1st
+- JC filter: affiliated JC (from MOE SchoolFinder) and where each IP programme continues
 - Mother tongue filter (data.gov.sg), with SAP schools hidden for non-Chinese mother tongues
 - Share link and copy-as-text
 

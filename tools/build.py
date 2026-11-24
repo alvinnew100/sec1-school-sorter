@@ -197,6 +197,35 @@ sd_cohort = max(sd_cohort, 0.35)
 sd_school = math.sqrt(max(sd_total ** 2 - sd_cohort ** 2, 0.25))
 print(f"error sd total={sd_total:.3f} bias={bias:+.3f} cohort sd={sd_cohort:.3f} school sd={sd_school:.3f}")
 
+# ---------- JC links ----------
+# Affiliations as listed on each JC's MOE SchoolFinder page (checked Nov 2026).
+JC_AFF = {
+    "Catholic JC": ["Assumption English", "Catholic High (Secondary)", "CHIJ Katong Convent", "CHIJ Secondary (Toa Payoh)",
+        "CHIJ St. Joseph's Convent", "CHIJ St. Nicholas Girls' (Secondary)", "CHIJ St. Theresa's Convent", "Hai Sing Catholic",
+        "Holy Innocents' High", "Maris Stella High (Secondary)", "Montfort", "St. Anthony's Canossian", "St. Gabriel's",
+        "St. Joseph's Institution (Secondary)", "St. Patrick's"],
+    "St. Andrew's JC": ["Anglican High", "Christ Church", "Kuo Chuan Presbyterian", "Presbyterian High", "St. Andrew's",
+        "St. Hilda's", "St. Margaret's (Secondary)"],
+    "Anglo-Chinese JC": ["Anglo-Chinese (Barker Road)", "Anglo-Chinese (Independent) (Secondary)", "Fairfield Methodist (Secondary)",
+        "Geylang Methodist (Secondary)", "Methodist Girls' (Secondary)", "Paya Lebar Methodist Girls' (Secondary)"],
+    "Nanyang JC": ["Chung Cheng High (Main)", "Chung Cheng High (Yishun)"],
+    "Victoria JC": ["Victoria"],
+}
+# Where each school's Integrated Programme continues after Sec 4.
+IP_JC = {
+    "Raffles Institution (Secondary)": "Raffles Institution (JC)", "Raffles Girls' (Secondary)": "Raffles Institution (JC)",
+    "Hwa Chong Institution (Secondary)": "Hwa Chong Institution (JC)", "Nanyang Girls' High": "Hwa Chong Institution (JC)",
+    "Dunman High (Secondary)": "Dunman High (JC)", "River Valley High (Secondary)": "River Valley High (JC)",
+    "National Junior College (Secondary)": "National JC", "Temasek Junior College (Secondary)": "Temasek JC",
+    "Anglo-Chinese (Independent) (Secondary)": "ACS (Independent) IB Diploma", "Methodist Girls' (Secondary)": "ACS (Independent) IB Diploma",
+    "St. Joseph's Institution (Secondary)": "SJI IB Diploma",
+    "Catholic High (Secondary)": "Eunoia JC", "CHIJ St. Nicholas Girls' (Secondary)": "Eunoia JC", "Singapore Chinese Girls'": "Eunoia JC",
+    "Victoria": "Victoria JC", "Cedar Girls'": "Victoria JC",
+}
+jc_of = {sch: jc for jc, lst in JC_AFF.items() for sch in lst}
+unknown = [x for x in list(jc_of) + list(IP_JC) if x not in cop]
+assert not unknown, unknown
+
 # ---------- assemble ----------
 f_best = METHODS[best]
 schools = []
@@ -234,6 +263,8 @@ for s, tracks in cop.items():
         "hist": hist,
         "pred": pred,
         "stale": stale,
+        "jc": jc_of.get(s, ""),
+        "ipJc": IP_JC.get(s, "") if "IP" in tracks else "",
     })
 schools.sort(key=lambda x: x["name"])
 print("schools:", len(schools), "missing meta:", missing_meta)
