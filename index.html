@@ -138,9 +138,6 @@ footer{max-width:1180px;margin:0 auto;padding:0 14px 90px;font-size:12px;color:v
         <label class="f" id="hclWrap" hidden>Higher Chinese grade
           <select id="hcl"><option value="">Not taken / no grade</option><option value="D">Distinction</option><option value="M">Merit</option><option value="P">Pass</option></select>
         </label>
-        <label class="f">Affiliated to (optional)
-          <select id="aff"><option value="">No affiliation</option></select>
-        </label>
         <label class="f">Home postal code (optional)
           <input id="postal" type="text" inputmode="numeric" maxlength="6" placeholder="e.g. 520123">
         </label>
@@ -149,6 +146,13 @@ footer{max-width:1180px;margin:0 auto;padding:0 14px 90px;font-size:12px;color:v
         </label>
       </div>
       <div class="pg-note" id="pgNote"></div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="hasAff"> My child's primary school is affiliated to a secondary school</label>
+      <div id="affWrap" hidden style="margin-top:8px">
+        <label class="f">Which secondary school is the primary school affiliated to?
+          <select id="aff"><option value="">Choose the secondary school</option></select>
+        </label>
+        <p class="hint">Example: CHIJ primary schools are affiliated to CHIJ secondary schools. Schools are grouped by the JC they are in turn affiliated to. Affiliation priority only applies if this school is your 1st choice.</p>
+      </div>
     </section>
 
     <section class="card" aria-labelledby="h-filter">
@@ -222,7 +226,7 @@ footer{max-width:1180px;margin:0 auto;padding:0 14px 90px;font-size:12px;color:v
   <p><b>Not an MOE tool.</b> Past cut-offs come from public sites (sgschooling.com, skoolopedia.com); school details and mother tongues offered come from data.gov.sg. Always check figures on <a href="https://www.moe.gov.sg/schoolfinder" target="_blank" rel="noopener">MOE SchoolFinder</a>. Estimates are not guarantees: real cut-offs depend on how this year's cohort scores and chooses.</p>
 </footer>
 
-<script src="data.js?v=3"></script>
+<script src="data.js?v=4"></script>
 <script>
 (() => {
 "use strict";
@@ -500,6 +504,7 @@ function bind(){
     state[id] = e.target.value;
     if (id === "gender" || id === "mt") state.list = state.list.filter(x => eligible(byName[x.name]));
     renderAll(); });
+  on("hasAff","change", e => { $("affWrap").hidden = !e.target.checked; if (!e.target.checked && state.aff) { state.aff = ""; $("aff").value = ""; renderAll(); } });
   on("pg","change", e => { state.pg = e.target.value; state.list = state.list.filter(x => tracksForName(x)); renderAll(); });
   on("postal","input", e => { state.postal = e.target.value.replace(/\D/g, "").slice(0,6); renderList(); save(); });
   on("q","input", e => { state.q = e.target.value; renderList(); });
@@ -549,7 +554,12 @@ function init(){
   const towns = [...new Set(SCHOOLS.map(s => s.town).filter(Boolean))].sort();
   $("town").innerHTML += towns.map(t => `<option>${esc(t)}</option>`).join("");
   const affs = SCHOOLS.filter(s => Object.keys(s.pred).some(k => k.startsWith("aff_"))).sort((a,b) => a.full.localeCompare(b.full));
-  $("aff").innerHTML += affs.map(s => `<option value="${esc(s.name)}">${esc(s.full)}</option>`).join("");
+  const groups = {};
+  for (const a of affs) (groups[a.jc || ""] = groups[a.jc || ""] || []).push(a);
+  $("aff").innerHTML += Object.keys(groups).sort((a,b) => (a === "") - (b === "") || a.localeCompare(b)).map(j =>
+    `<optgroup label="${j ? "Affiliated to " + esc(j) : "No JC affiliation"}">` +
+    groups[j].map(s => `<option value="${esc(s.name)}">${esc(s.full)}</option>`).join("") + `</optgroup>`).join("");
+  $("hasAff").checked = !!state.aff; $("affWrap").hidden = !state.aff;
   const jcs = [...new Set(SCHOOLS.flatMap(s => [s.jc, s.ipJc]).filter(Boolean))].sort();
   $("jcf").innerHTML += jcs.map(j => `<option value="${esc(j)}">${esc(j)}</option>`).join("");
   for (const id of ["al","gender","cit","mt","hcl","aff","postal","zone","town","jcf","sort","q"]) $(id).value = state[id];
