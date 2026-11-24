@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sec 1 School Shortlist Sorter · 2027 intake</title>
+<meta name="description" content="Check your PSLE score against 4 years of Singapore secondary school cut-off points, see estimated 2027 cut-offs, and test your 6 choices before submitting.">
+<meta property="og:title" content="Sec 1 School Shortlist Sorter">
+<meta property="og:description" content="PSLE score vs 4 years of cut-offs, estimated 2027 cut-offs, and a check of your 6 choices.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f6e6a'/%3E%3Ctext x='16' y='22' font-size='16' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'%3ES1%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f7f9; --card:#fff; --ink:#1b1f24; --muted:#5d6670; --line:#e3e6ea;
+  --accent:#0f6e6a; --accent-weak:#e3f1f0;
+  --safe:#1f7a3f; --safe-bg:#e5f4ea; --likely:#3c7f1f; --likely-bg:#eef6e3;
+  --toss:#8a6100; --toss-bg:#fdf3d8; --reach:#b0491b; --reach-bg:#fbe9df;
+  --long:#9b1c31; --long-bg:#f9e1e5; --radius:12px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--accent)}
+header{background:var(--ink);color:#fff;padding:18px 16px 16px}
+header h1{margin:0;font-size:20px;letter-spacing:-.01em}
+header p{margin:4px 0 0;color:#c9d1d9;font-size:13.5px}
+main{max-width:1180px;margin:0 auto;padding:14px 12px 120px;display:grid;gap:14px}
+@media(min-width:980px){main{grid-template-columns:minmax(0,1fr) 380px;align-items:start}
+  #shortlistPanel{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.card h2{margin:0 0 10px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600}
+input,select,button{font:inherit}
+input[type=number],input[type=text],input[type=search],select{width:100%;padding:9px 10px;border:1px solid #cfd5db;border-radius:9px;background:#fff;color:var(--ink);font-size:15px}
+.check{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);font-weight:500}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.pg-note{margin-top:10px;padding:9px 11px;background:var(--accent-weak);border-radius:9px;font-size:13.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1px solid #cfd5db;background:#fff;border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:2px 0 8px;font-size:13px;color:var(--muted)}
+.list{display:grid;gap:10px}
+.school{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 12px 10px}
+.school .top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.school h3{margin:0;font-size:15.5px;line-height:1.3}
+.meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.b{font-size:11.5px;padding:2px 7px;border-radius:6px;background:#eef0f3;color:#39424c}
+.b.warn{background:var(--reach-bg);color:var(--reach)}
+.pill{flex:none;text-align:right}
+.pct{font-size:20px;font-weight:700;line-height:1}
+.cat{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px}
+.c-safe{color:var(--safe)} .bg-safe{background:var(--safe-bg);color:var(--safe)}
+.c-likely{color:var(--likely)} .bg-likely{background:var(--likely-bg);color:var(--likely)}
+.c-toss{color:var(--toss)} .bg-toss{background:var(--toss-bg);color:var(--toss)}
+.c-reach{color:var(--reach)} .bg-reach{background:var(--reach-bg);color:var(--reach)}
+.c-long{color:var(--long)} .bg-long{background:var(--long-bg);color:var(--long)}
+.track{margin-top:10px;border-top:1px dashed var(--line);padding-top:9px}
+.track-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600}
+.hist{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.yr{min-width:46px;text-align:center;border-radius:8px;padding:4px 4px 3px;border:1px solid var(--line)}
+.yr small{display:block;font-size:10.5px;color:var(--muted)}
+.yr b{font-size:15px}
+.yr.in{background:var(--safe-bg);border-color:#bfe3cb}
+.yr.tie{background:var(--toss-bg);border-color:#f0dc9c}
+.yr.out{background:var(--long-bg);border-color:#efc1ca}
+.yr.est{border-style:dashed;background:#fff}
+.add{border:1px solid var(--accent);color:var(--accent);background:#fff;border-radius:8px;padding:5px 10px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.add.on{background:var(--accent);color:#fff}
+.add:disabled{opacity:.45;cursor:not-allowed}
+.links{margin-top:8px;font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+/* shortlist */
+#shortlistPanel h2{display:flex;justify-content:space-between;align-items:center}
+.sl{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.sl li{border:1px solid var(--line);border-radius:10px;padding:9px 10px;display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center}
+.sl .n{font-weight:700;color:var(--muted)}
+.sl .nm{font-weight:600;font-size:14px;line-height:1.25}
+.sl .sub{font-size:12px;color:var(--muted)}
+.sl .ctl{display:flex;gap:3px}
+.ib{border:1px solid #cfd5db;background:#fff;border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:14px;line-height:1}
+.ib:disabled{opacity:.35}
+.outcome{margin-top:12px}
+.bar{margin:7px 0;font-size:13px}
+.bar .row{display:flex;justify-content:space-between;gap:10px}
+.bar .row span{min-width:0}
+.bar .track2{background:#eef0f3;border-radius:5px;height:7px;margin-top:3px;overflow:hidden}
+.bar .fill{background:var(--accent);height:100%;border-radius:5px}
+.warns{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.warns li{font-size:13px;padding:8px 10px;border-radius:9px;background:var(--toss-bg);color:#5c4100}
+.warns li.ok{background:var(--safe-bg);color:#14532d}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.btn{border:1px solid #cfd5db;background:#fff;border-radius:9px;padding:8px 12px;font-weight:600;font-size:13.5px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#mobileBar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;z-index:5}
+#mobileBar button{background:#fff;color:var(--ink);border:0;border-radius:9px;padding:8px 12px;font-weight:700}
+@media(min-width:980px){#mobileBar{display:none}}
+details.method{font-size:14px}
+details.method summary{cursor:pointer;font-weight:700;font-size:15px}
+table.bt{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}
+table.bt th,table.bt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}
+table.bt td.num,table.bt th.num{text-align:right}
+footer{max-width:1180px;margin:0 auto;padding:0 14px 90px;font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 14px;border-radius:9px;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Sec 1 School Shortlist Sorter</h1>
+  <p>For the 2027 Sec 1 intake (PSLE 2026). See how your score compares with four years of cut-offs, estimate each school's next cut-off, and test your 6 choices before you submit.</p>
+</header>
+
+<main>
+  <div style="display:grid;gap:14px;min-width:0">
+    <section class="card" aria-labelledby="h-you">
+      <h2 id="h-you">1. Your details</h2>
+      <div class="grid">
+        <label class="f">PSLE score (AL)
+          <input id="al" type="number" min="4" max="30" step="1" inputmode="numeric" value="14">
+        </label>
+        <label class="f">Student is a
+          <select id="gender"><option value="Girls">Girl</option><option value="Boys">Boy</option></select>
+        </label>
+        <label class="f">Citizenship
+          <select id="cit"><option value="SC">Singapore Citizen</option><option value="PR">Permanent Resident</option><option value="IS">International student</option></select>
+        </label>
+        <label class="f">Mother tongue
+          <select id="mt">
+            <option value="">Not set</option><option>Chinese</option><option>Malay</option><option>Tamil</option>
+            <option value="Other">Other (Hindi, Bengali, etc.)</option><option value="Exempt">Exempted</option>
+          </select>
+        </label>
+        <label class="f" id="hclWrap" hidden>Higher Chinese grade
+          <select id="hcl"><option value="">Not taken / no grade</option><option value="D">Distinction</option><option value="M">Merit</option><option value="P">Pass</option></select>
+        </label>
+        <label class="f">Affiliated to (optional)
+          <select id="aff"><option value="">No affiliation</option></select>
+        </label>
+        <label class="f">Home postal code (optional)
+          <input id="postal" type="text" inputmode="numeric" maxlength="6" placeholder="e.g. 520123">
+        </label>
+        <label class="f" id="pgWrap">Posting group
+          <select id="pg"></select>
+        </label>
+      </div>
+      <div class="pg-note" id="pgNote"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-filter">
+      <h2 id="h-filter">2. Filter schools</h2>
+      <div class="grid">
+        <label class="f">Search
+          <input id="q" type="search" placeholder="School name">
+        </label>
+        <label class="f">Zone
+          <select id="zone"><option value="">All zones</option><option>North</option><option>South</option><option>East</option><option>West</option></select>
+        </label>
+        <label class="f">Town
+          <select id="town"><option value="">All towns</option></select>
+        </label>
+        <label class="f">Sort by
+          <select id="sort"><option value="close">Closest to my score</option><option value="chance">Best chance first</option><option value="cop">Most competitive first</option><option value="name">Name</option></select>
+        </label>
+      </div>
+      <div class="chips" style="margin-top:12px">
+        <label class="check"><input type="checkbox" id="mtOnly" checked> Only schools that teach my mother tongue</label>
+        <label class="check"><input type="checkbox" id="showIP" checked> Show IP track</label>
+      </div>
+      <div class="chips" id="catChips" role="group" aria-label="Filter by chance">
+        <button class="chip" data-cat="" aria-pressed="true">All</button>
+        <button class="chip" data-cat="safe" aria-pressed="false">Safe</button>
+        <button class="chip" data-cat="likely" aria-pressed="false">Likely</button>
+        <button class="chip" data-cat="toss" aria-pressed="false">Toss-up</button>
+        <button class="chip" data-cat="reach" aria-pressed="false">Reach</button>
+        <button class="chip" data-cat="long" aria-pressed="false">Long shot</button>
+      </div>
+      <p class="hint">Chance = estimated probability of getting in if the school is your 1st choice. Boxes show past cut-offs: green = your score beat it, yellow = tie (decided by tie-breakers), red = didn't make it.</p>
+    </section>
+
+    <section aria-labelledby="h-list">
+      <h2 id="h-list" class="sr">Schools</h2>
+      <div class="toolbar"><span id="count"></span><span>Tap “Add” to build your 6 choices</span></div>
+      <div class="list" id="list"></div>
+    </section>
+
+    <section class="card">
+      <details class="method" id="method">
+        <summary>How the estimates work (and their limits)</summary>
+        <div id="methodBody"></div>
+      </details>
+    </section>
+  </div>
+
+  <aside class="card" id="shortlistPanel" aria-labelledby="h-sl">
+    <h2 id="h-sl">3. Your 6 choices <span id="slCount" style="font-weight:500;color:var(--muted);font-size:13px"></span></h2>
+    <ol class="sl" id="sl"></ol>
+    <div id="slEmpty" class="empty">No schools yet. Add up to 6 from the list.</div>
+    <div class="outcome" id="outcome"></div>
+    <ul class="warns" id="warns"></ul>
+    <div class="actions">
+      <button class="btn" id="orderBtn" title="Put the most competitive schools first">Order: reach → safe</button>
+      <button class="btn primary" id="shareBtn">Copy share link</button>
+      <button class="btn" id="copyBtn">Copy as text</button>
+      <button class="btn" id="clearBtn">Clear</button>
+    </div>
+    <p class="hint">Submit your real choices on MOE's S1 Portal. This page only helps you plan.</p>
+  </aside>
+</main>
+
+<div id="mobileBar"><span id="mbText">0 of 6 chosen</span><button id="mbBtn">View choices</button></div>
+<div class="toast" id="toast" role="status"></div>
+
+<footer>
+  <p><b>Not an MOE tool.</b> Past cut-offs come from public sites (sgschooling.com, skoolopedia.com); school details and mother tongues offered come from data.gov.sg. Always check figures on <a href="https://www.moe.gov.sg/schoolfinder" target="_blank" rel="noopener">MOE SchoolFinder</a>. Estimates are not guarantees: real cut-offs depend on how this year's cohort scores and chooses.</p>
+</footer>
+
+<script src="data.js"></script>
+<script>
+(() => {
+"use strict";
+const SCHOOLS = window.SCHOOLS, MODEL = window.MODEL;
+const YEARS = ["2023","2024","2025","2026"];
+const TRACK_LABEL = {IP:"IP", PG3:"Express (G3)", PG2:"G2", PG1:"G1"};
+const CAT = [
+  {k:"safe",  min:.90, label:"Safe"},
+  {k:"likely",min:.65, label:"Likely"},
+  {k:"toss",  min:.35, label:"Toss-up"},
+  {k:"reach", min:.10, label:"Reach"},
+  {k:"long",  min:0,   label:"Long shot"}];
+const HCL_RANK = {"":0, P:1, M:2, D:3};
+const CIT_FACTOR = {SC:1, PR:.35, IS:.15};
+const byName = Object.fromEntries(SCHOOLS.map(s => [s.name, s]));
+const $ = id => document.getElementById(id);
+
+// ---------- state ----------
+const state = {al:14, gender:"Girls", cit:"SC", mt:"", hcl:"", aff:"", postal:"", pg:"",
+  q:"", zone:"", town:"", sort:"close", cat:"", mtOnly:true, showIP:true, list:[]};
+const store = {
+  get(){ try { return JSON.parse(localStorage.getItem("s1sorter") || "null"); } catch(e){ return null; } },
+  set(v){ try { localStorage.setItem("s1sorter", JSON.stringify(v)); } catch(e){} }
+};
+function loadState(){
+  let src = null;
+  if (location.hash.length > 1) {
+    try { src = JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1))))); } catch(e){ src = null; }
+  }
+  if (!src) src = store.get();
+  if (src && typeof src === "object") {
+    for (const k of Object.keys(state)) if (k in src) state[k] = src[k];
+    state.list = (Array.isArray(src.list) ? src.list : []).filter(x => x && byName[x.name] && byName[x.name].pred[x.track] != null).slice(0, 6);
+  }
+}
+function save(){ store.set(state); }
+
+// ---------- maths ----------
+function phi(x){ // standard normal CDF
+  const t = 1/(1+0.2316419*Math.abs(x)), d = 0.3989423*Math.exp(-x*x/2);
+  const p = d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return x > 0 ? 1-p : p;
+}
+const capOf = t => MODEL.cap[t.replace("aff_","")];
+function dist(center, track){ // P(next cut-off = k)
+  const sd = MODEL.sdTotal, cap = capOf(track), out = [];
+  for (let k = 4; k <= cap; k++) {
+    const lo = k === 4 ? -Infinity : (k - .5 - center)/sd;
+    const hi = k === cap ? Infinity : (k + .5 - center)/sd;
+    out.push([k, phi(hi) - (lo === -Infinity ? 0 : phi(lo))]);
+  }
+  return out;
+}
+function interval(center, track){
+  const d = dist(center, track); let c = 0, lo = null, hi = null;
+  for (const [k,p] of d){ c += p; if (lo === null && c >= .1) lo = k; if (hi === null && c >= .9) hi = k; }
+  return [lo, hi];
+}
+function lastVal(s, t){ const h = s.hist[t] || {}; const ys = YEARS.filter(y => h[y]); return ys.length ? h[ys[ys.length-1]] : null; }
+function suffixOf(v){ const m = /([MDP])$/.exec(v || ""); return m ? m[1] : ""; }
+function tieBase(rank){ return Math.max(.2, .55 - .07*((rank||1)-1)) * CIT_FACTOR[state.cit]; }
+function tieWin(s, t, rank){
+  // at SAP schools, Higher Chinese grade is compared before the usual tie-breakers
+  if (s.sap && t !== "IP") {
+    const need = HCL_RANK[suffixOf(lastVal(s, t))], mine = HCL_RANK[state.hcl] || 0;
+    if (mine > need) return 1;
+    if (mine < need) return 0;
+  }
+  return tieBase(rank);
+}
+function effTrack(s, t, rank){ // affiliation only counts when the school is 1st choice, SEC track only
+  if (t !== "IP" && state.aff === s.name && s.pred["aff_"+t] != null && (rank === 1 || rank == null)) return "aff_"+t;
+  return t;
+}
+function chance(s, t, rank){
+  const et = effTrack(s, t, rank), center = s.pred[et];
+  if (center == null) return null;
+  const al = state.al, cap = capOf(et), tw = tieWin(s, t, rank);
+  let p = 0;
+  for (const [k, pk] of dist(center, et)) {
+    if (al < k || (k === cap && al <= cap)) p += pk;
+    else if (al === k) p += pk * tw;
+  }
+  return p;
+}
+const catOf = p => CAT.find(c => p >= c.min);
+
+// ---------- eligibility ----------
+function pgOptions(al){
+  if (al <= 20) return ["PG3"]; if (al <= 22) return ["PG3","PG2"];
+  if (al <= 24) return ["PG2"]; if (al === 25) return ["PG2","PG1"]; return ["PG1"];
+}
+function currentPG(){ const o = pgOptions(state.al); return o.includes(state.pg) ? state.pg : o[0]; }
+function tracksFor(s){
+  const pg = currentPG(), out = [];
+  if (pg === "PG3" && state.showIP && s.pred.IP != null) out.push("IP");
+  if (s.pred[pg] != null) out.push(pg);
+  return out;
+}
+function mtStatus(s){
+  if (!state.mt || state.mt === "Exempt") return "ok";
+  if (state.mt === "Other") return s.sap ? "sap" : "ok";
+  if (state.mt !== "Chinese" && s.sap) return "sap";
+  return s.mt.includes(state.mt) ? "ok" : "missing";
+}
+function visible(s){
+  if (s.gender && s.gender !== "Co-ed" && s.gender !== state.gender) return false;
+  const ms = mtStatus(s);
+  if (ms === "sap") return false; // SAP schools need Chinese as mother tongue
+  if (ms === "missing" && state.mtOnly) return false;
+  if (state.zone && s.zone !== state.zone) return false;
+  if (state.town && s.town !== state.town) return false;
+  if (state.q && !(s.name + " " + s.full).toLowerCase().includes(state.q.toLowerCase())) return false;
+  return tracksFor(s).length > 0;
+}
+
+// ---------- rendering ----------
+const esc = x => String(x).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function yrClass(v){ const n = parseInt(v,10); return state.al < n ? "in" : state.al === n ? "tie" : "out"; }
+function mapsLink(s){
+  const dest = encodeURIComponent(s.full + " Singapore " + s.postal);
+  const org = /^\d{6}$/.test(state.postal) ? "&origin=" + encodeURIComponent("Singapore " + state.postal) : "";
+  return `https://www.google.com/maps/dir/?api=1&destination=${dest}${org}&travelmode=transit`;
+}
+function inList(name, t){ return state.list.findIndex(x => x.name === name && x.track === t); }
+
+function trackBlock(s, t){
+  const et = effTrack(s, t, 1), h = s.hist[et] || {}, p = chance(s, t, 1), c = catOf(p);
+  const center = s.pred[et], [lo, hi] = interval(center, et);
+  const boxes = YEARS.map(y => h[y] ? `<div class="yr ${yrClass(h[y])}"><small>${y}</small><b>${esc(h[y])}</b></div>`
+                                     : `<div class="yr"><small>${y}</small><b style="color:#aab">–</b></div>`).join("");
+  const est = `<div class="yr est"><small>2027 est.</small><b>${lo === hi ? lo : lo + "–" + hi}</b></div>`;
+  const idx = inList(s.name, t), full = state.list.length >= 6 && idx < 0;
+  const affNote = et.startsWith("aff_") ? ` · <span style="color:var(--accent)">affiliated (1st choice)</span>` : "";
+  const stale = (s.stale || []).includes(et) ? ` · no 2026 figure published` : "";
+  return `<div class="track">
+    <div class="track-h"><span>${TRACK_LABEL[t]}${affNote}${stale}</span>
+      <span><span class="pct c-${c.k}">${Math.round(p*100)}%</span> <span class="cat bg-${c.k}">${c.label}</span></span></div>
+    <div class="hist">${boxes}${est}</div>
+    <div style="display:flex;justify-content:flex-end;margin-top:6px">
+      <button class="add ${idx >= 0 ? "on" : ""}" data-add="${esc(s.name)}" data-track="${t}" ${full ? "disabled" : ""}>${idx >= 0 ? "✓ Choice " + (idx+1) : "+ Add"}</button>
+    </div></div>`;
+}
+function renderList(){
+  const rows = [];
+  for (const s of SCHOOLS) {
+    if (!visible(s)) continue;
+    for (const t of tracksFor(s)) {
+      const p = chance(s, t, 1);
+      if (state.cat && catOf(p).k !== state.cat) continue;
+      rows.push({s, t, p});
+    }
+  }
+  // group tracks of the same school into one card
+  const cards = new Map();
+  for (const r of rows) { if (!cards.has(r.s.name)) cards.set(r.s.name, {s:r.s, tracks:[], best:0, cop:99}); const c = cards.get(r.s.name);
+    c.tracks.push(r.t); c.best = Math.max(c.best, r.p); c.cop = Math.min(c.cop, r.s.pred[effTrack(r.s, r.t, 1)]); }
+  let arr = [...cards.values()];
+  if (state.sort === "close") arr.sort((a,b) => Math.abs(a.best - .5) - Math.abs(b.best - .5) || a.cop - b.cop || a.s.name.localeCompare(b.s.name));
+  else if (state.sort === "chance") arr.sort((a,b) => b.best - a.best || a.cop - b.cop || a.s.name.localeCompare(b.s.name));
+  else if (state.sort === "cop") arr.sort((a,b) => a.cop - b.cop || a.s.name.localeCompare(b.s.name));
+  else arr.sort((a,b) => a.s.name.localeCompare(b.s.name));
+  $("count").textContent = `${arr.length} school${arr.length === 1 ? "" : "s"}`;
+  if (!arr.length) { $("list").innerHTML = `<div class="empty card">No schools match. Try clearing a filter.</div>`; return; }
+  $("list").innerHTML = arr.map(({s, tracks}) => {
+    const ms = mtStatus(s);
+    const mtB = s.mt.map(m => `<span class="b">${esc(m)}</span>`).join("");
+    const warn = ms === "missing" ? `<span class="b warn">${esc(state.mt)} not taught here</span>` : "";
+    const tags = [s.gender, s.sap ? "SAP" : "", s.autonomous ? "Autonomous" : "", s.type && !/^Government$/i.test(s.type) ? s.type : ""].filter(Boolean)
+                 .map(x => `<span class="b">${esc(x)}</span>`).join("");
+    return `<article class="school">
+      <div class="top"><div><h3>${esc(s.full)}</h3>
+        <div class="meta">${esc(s.town)}${s.zone ? " · " + esc(s.zone) : ""}</div>
+        <div class="badges">${tags}${mtB}${warn}</div></div></div>
+      ${tracks.map(t => trackBlock(s, t)).join("")}
+      <div class="links"><a href="${mapsLink(s)}" target="_blank" rel="noopener">Directions${/^\d{6}$/.test(state.postal) ? " from home" : ""}</a>
+        <a href="https://www.google.com/search?q=${encodeURIComponent(s.full + " site:moe.gov.sg schoolfinder")}" target="_blank" rel="noopener">MOE SchoolFinder</a></div>
+    </article>`;
+  }).join("");
+}
+
+// ---------- shortlist + simulation ----------
+function randn(){ let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function simulate(){
+  const N = 20000, L = state.list.map((x, i) => {
+    const s = byName[x.name], et = effTrack(s, x.track, i+1);
+    return {s, t:x.track, center:s.pred[et], cap:capOf(et), tw:tieWin(s, x.track, i+1)};
+  });
+  const counts = new Array(L.length + 1).fill(0), al = state.al;
+  for (let n = 0; n < N; n++) {
+    const cohort = randn()*MODEL.sdCohort; let got = L.length;
+    for (let i = 0; i < L.length; i++) {
+      const it = L[i];
+      const k = Math.max(4, Math.min(it.cap, Math.round(it.center + cohort + randn()*MODEL.sdSchool)));
+      if (al < k || (k === it.cap && al <= it.cap) || (al === k && Math.random() < it.tw)) { got = i; break; }
+    }
+    counts[got]++;
+  }
+  return counts.map(c => c/N);
+}
+function renderShortlist(){
+  const L = state.list;
+  $("slCount").textContent = `${L.length}/6`;
+  $("mbText").textContent = `${L.length} of 6 chosen`;
+  $("slEmpty").hidden = L.length > 0;
+  $("sl").innerHTML = L.map((x, i) => {
+    const s = byName[x.name], p = chance(s, x.track, i+1), c = catOf(p), et = effTrack(s, x.track, i+1);
+    return `<li><span class="n">${i+1}</span>
+      <div><div class="nm">${esc(s.full)}</div>
+        <div class="sub">${TRACK_LABEL[x.track]}${et.startsWith("aff_") ? " · affiliated" : ""} · last cut-off ${esc(lastVal(s, et) || "–")} · <span class="c-${c.k}" style="font-weight:700">${Math.round(p*100)}% at this rank</span></div></div>
+      <div class="ctl"><button class="ib" data-up="${i}" ${i === 0 ? "disabled" : ""} aria-label="Move up">↑</button>
+        <button class="ib" data-down="${i}" ${i === L.length-1 ? "disabled" : ""} aria-label="Move down">↓</button>
+        <button class="ib" data-rm="${i}" aria-label="Remove">✕</button></div></li>`;
+  }).join("");
+  if (!L.length) { $("outcome").innerHTML = ""; $("warns").innerHTML = ""; return; }
+  const res = simulate();
+  const bars = L.map((x, i) => [`${i+1}. ${byName[x.name].full}`, res[i]]).concat([["None of these (MOE posts you to a school with places, near home)", res[L.length]]]);
+  $("outcome").innerHTML = `<div style="font-weight:700;font-size:14px;margin-bottom:4px">Where you'd likely be posted</div>` +
+    bars.map(([n, p]) => `<div class="bar"><div class="row"><span>${esc(n)}</span><b>${p < .005 && p > 0 ? "<1" : Math.round(p*100)}%</b></div>
+      <div class="track2"><div class="fill" style="width:${(p*100).toFixed(1)}%;${n.startsWith("None") ? "background:var(--long)" : ""}"></div></div></div>`).join("") +
+    `<p class="hint">Based on 20,000 simulated posting rounds. Cut-offs across schools move together in each simulated year, like they do in real life.</p>`;
+  // warnings
+  const w = [], al = state.al;
+  const beat = L.filter((x, i) => { const s = byName[x.name]; const v = parseInt(lastVal(s, effTrack(s, x.track, i+1)) || "0", 10); return al < v; }).length;
+  if (beat < 2) w.push(`Only ${beat} of your choices had a cut-off your score beat last year. MOE advises including 2–3 such schools.`);
+  if (L.length < 6) w.push(`You're using ${L.length} of 6 choices. MOE advises using all 6.`);
+  if (res[L.length] > .05) w.push(`About ${Math.round(res[L.length]*100)}% chance of getting none of these. Add a safer school.`);
+  L.forEach((x, i) => { if (i < L.length-1 && chance(byName[x.name], x.track, i+1) > .97)
+    w.push(`Choice ${i+1} (${byName[x.name].full}) is almost certain, so choices below it will almost never be used. Move safer schools lower.`); });
+  const affIdx = L.findIndex(x => x.name === state.aff);
+  if (state.aff && affIdx > 0) w.push(`Affiliation priority only applies when ${byName[state.aff].full} is your 1st choice. Right now it's choice ${affIdx+1}.`);
+  if (state.cit !== "SC" && L.length) w.push("Singapore Citizens win ties before PRs and international students, so treat schools whose cut-off equals your score as long shots.");
+  if (!w.length) w.push("✓ This list follows MOE's guidance: it uses all 6 choices, includes safe schools, and puts the reach schools first.");
+  $("warns").innerHTML = w.map(x => `<li class="${x.startsWith("✓") ? "ok" : ""}">${esc(x)}</li>`).join("");
+}
+
+function renderPG(){
+  const opts = pgOptions(state.al), pg = currentPG();
+  $("pg").innerHTML = opts.map(o => `<option value="${o}" ${o === pg ? "selected" : ""}>${TRACK_LABEL[o]}</option>`).join("");
+  $("pg").disabled = opts.length < 2;
+  const notes = {PG3:"You can choose Express (G3) schools, and IP schools too.", PG2:"You can choose G2 courses.", PG1:"You can choose G1 courses (needs AL 7 or better in both English and Maths for AL 26–30)."};
+  $("pgNote").innerHTML = `AL <b>${state.al}</b> → ${opts.length > 1 ? "you can pick either posting group. " : ""}${notes[pg]}`;
+  $("hclWrap").hidden = state.mt !== "Chinese";
+}
+function renderAll(){ renderPG(); renderList(); renderShortlist(); save(); }
+
+// ---------- methodology ----------
+function renderMethod(){
+  const bt = Object.entries(MODEL.backtest).sort((a,b) => a[1].mae_pg3 - b[1].mae_pg3);
+  const sh = MODEL.yearShifts;
+  $("methodBody").innerHTML = `
+  <p><b>Data.</b> Cut-offs for the 2023–2026 Sec 1 intakes for ${SCHOOLS.length} schools, covering IP, G3, G2, G1 and affiliated places. A cut-off is the score of the last student admitted. Schools admitted only through DSA or their own exercises (NUS High, SOTA, SST, Sports School, Crest, Spectra, Northlight, Assumption Pathway) aren't listed.</p>
+  <p><b>What predicts next year's cut-off best?</b> We tested several rules by "predicting" the 2025 and 2026 cut-offs from the years before each, then comparing with what actually happened (${bt[0][1].n} school-track cases):</p>
+  <table class="bt"><thead><tr><th>Rule</th><th class="num">Avg error (G3)</th><th class="num">Exactly right (G3)</th></tr></thead><tbody>
+  ${bt.map(([k,v]) => `<tr><td>${esc(k)}${k === MODEL.method ? " <b>← used</b>" : ""}</td><td class="num">${v.mae_pg3.toFixed(2)} pts</td><td class="num">${Math.round(v.exact_pg3*100)}%</td></tr>`).join("")}
+  </tbody></table>
+  <p>"Same as last year" was the most accurate. Schools whose cut-off jumped or fell sharply did <i>not</i> reliably bounce back the next year. So the 2027 estimate is centred on the 2026 cut-off.</p>
+  <p><b>Uncertainty.</b> Errors on past years had a spread of about ±${MODEL.sdTotal.toFixed(2)} points. Much of that comes from whole-cohort swings: the average G3 cut-off moved ${sh["2024"]>0?"+":""}${sh["2024"]}, ${sh["2025"]>0?"+":""}${sh["2025"]} and ${sh["2026"]>0?"+":""}${sh["2026"]} points into 2024, 2025 and 2026. The "2027 est." box shows the range covering about 80% of outcomes.</p>
+  <p><b>Ties.</b> If your score equals the cut-off, MOE breaks ties by citizenship, then how high you ranked the school, then by computerised ballot. With no data on how many tied students there are, we <i>assume</i> a Singapore Citizen wins a tie about 55% of the time at 1st choice, falling 7 points per lower rank (minimum 20%). PRs and international students are scaled down further. At SAP schools, a Higher Chinese grade is compared before the usual tie-breakers.</p>
+  <p><b>Affiliation</b> applies only when the affiliated school is your 1st choice, and only for its non-IP (SEC) track.</p>
+  <p><b>Limits.</b> Four years of data is little to go on, and nobody knows this cohort's scores or choices yet. Use the estimates to check how risky your list is, not as a promise. This year's real cut-offs are published with the posting results (tentatively 18 Dec 2026).</p>`;
+}
+
+// ---------- events ----------
+function bind(){
+  const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
+  on("al","input", e => { const v = parseInt(e.target.value, 10); if (v >= 4 && v <= 30) { state.al = v; state.list = state.list.filter(x => tracksForName(x)); renderAll(); } });
+  for (const id of ["gender","cit","mt","hcl","aff","zone","town","sort"]) on(id, "change", e => {
+    state[id] = e.target.value;
+    if (id === "gender" || id === "mt") state.list = state.list.filter(x => eligible(byName[x.name]));
+    renderAll(); });
+  on("pg","change", e => { state.pg = e.target.value; state.list = state.list.filter(x => tracksForName(x)); renderAll(); });
+  on("postal","input", e => { state.postal = e.target.value.replace(/\D/g, "").slice(0,6); renderList(); save(); });
+  on("q","input", e => { state.q = e.target.value; renderList(); });
+  on("mtOnly","change", e => { state.mtOnly = e.target.checked; renderAll(); });
+  on("showIP","change", e => { state.showIP = e.target.checked; renderAll(); });
+  $("catChips").addEventListener("click", e => { const b = e.target.closest("[data-cat]"); if (!b) return;
+    state.cat = b.dataset.cat; document.querySelectorAll("#catChips .chip").forEach(c => c.setAttribute("aria-pressed", c === b)); renderList(); });
+  $("list").addEventListener("click", e => { const b = e.target.closest("[data-add]"); if (!b) return;
+    const name = b.dataset.add, t = b.dataset.track, i = inList(name, t);
+    if (i >= 0) state.list.splice(i, 1);
+    else if (state.list.length < 6) state.list.push({name, track:t});
+    renderAll(); });
+  $("sl").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const L = state.list;
+    if (b.dataset.up) { const i = +b.dataset.up; [L[i-1], L[i]] = [L[i], L[i-1]]; }
+    if (b.dataset.down) { const i = +b.dataset.down; [L[i+1], L[i]] = [L[i], L[i+1]]; }
+    if (b.dataset.rm) L.splice(+b.dataset.rm, 1);
+    renderAll(); });
+  on("orderBtn","click", () => { state.list.sort((a, b) => chance(byName[a.name], a.track, 1) - chance(byName[b.name], b.track, 1));
+    const ai = state.list.findIndex(x => x.name === state.aff); if (ai > 0) state.list.unshift(state.list.splice(ai, 1)[0]);
+    renderAll(); toast("Ordered from most competitive to safest"); });
+  on("clearBtn","click", () => { if (!state.list.length) return; state.list = []; renderAll(); });
+  on("shareBtn","click", () => { const link = location.href.split("#")[0] + "#" + btoa(unescape(encodeURIComponent(JSON.stringify(state)))); copy(link, "Share link copied"); });
+  on("copyBtn","click", () => { const res = state.list.length ? simulate() : [];
+    const txt = `My Sec 1 choices (AL ${state.al}, ${TRACK_LABEL[currentPG()]}):\n` + state.list.map((x, i) => { const s = byName[x.name];
+      return `${i+1}. ${s.full} – ${TRACK_LABEL[x.track]}, last cut-off ${lastVal(s, effTrack(s, x.track, i+1))}, est. ${Math.round(chance(s, x.track, i+1)*100)}% chance`; }).join("\n") +
+      (state.list.length ? `\nChance of none: ${Math.round(res[state.list.length]*100)}%` : "");
+    copy(txt, "Copied"); });
+  on("mbBtn","click", () => $("shortlistPanel").scrollIntoView({behavior:"smooth"}));
+}
+function tracksForName(x){ const s = byName[x.name]; return tracksFor(s).includes(x.track); }
+function eligible(s){ // ignores display filters (zone, town, search)
+  if (s.gender && s.gender !== "Co-ed" && s.gender !== state.gender) return false;
+  return mtStatus(s) !== "sap";
+}
+function copy(text, msg){
+  const done = () => toast(msg);
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, () => fallback());
+  else fallback();
+  function fallback(){ const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch(e) { prompt("Copy this:", text); } ta.remove(); }
+}
+let tt; function toast(m){ const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("show"), 1800); }
+
+// ---------- init ----------
+function init(){
+  loadState();
+  const towns = [...new Set(SCHOOLS.map(s => s.town).filter(Boolean))].sort();
+  $("town").innerHTML += towns.map(t => `<option>${esc(t)}</option>`).join("");
+  const affs = SCHOOLS.filter(s => Object.keys(s.pred).some(k => k.startsWith("aff_"))).sort((a,b) => a.full.localeCompare(b.full));
+  $("aff").innerHTML += affs.map(s => `<option value="${esc(s.name)}">${esc(s.full)}</option>`).join("");
+  for (const id of ["al","gender","cit","mt","hcl","aff","postal","zone","town","sort","q"]) $(id).value = state[id];
+  $("mtOnly").checked = state.mtOnly; $("showIP").checked = state.showIP;
+  document.querySelectorAll("#catChips .chip").forEach(c => c.setAttribute("aria-pressed", c.dataset.cat === state.cat));
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+  bind(); renderMethod(); renderAll();
+}
+init();
+})();
+</script>
+</body>
+</html>
